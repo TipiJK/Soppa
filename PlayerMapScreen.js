@@ -1,15 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Dimensions, ImageBackground } from 'react-native';
+import { StyleSheet, View, Text, Dimensions, ImageBackground, Pressable, Image } from 'react-native';
 
 import { ref, onValue, orderByChild, equalTo, query} from 'firebase/database';
 import database from './firebase';
+import { Button } from 'react-native-elements';
 
 export default function NewMapScreen({ route, navigation }) {
 
   const windowwidth = Dimensions.get('window').width;
   const {player} = route.params;
   const [shots, setShots] = useState([]);
+  const [goalview, setGoalview] = useState(false);
+  const [coord, setCoord] = useState();
 
   useEffect(() => {
     const itemsRef = query(ref(database, 'shots/'), orderByChild('playerId'), equalTo(player.key));
@@ -20,6 +23,30 @@ export default function NewMapScreen({ route, navigation }) {
       //console.log(items);
     })
   }, []);
+
+  const shotTouch = (i) => {
+    setGoalview(!goalview);
+    setCoord(i);
+  }
+
+  const GoalFrame = () => {
+    if (goalview){
+    return(
+      <View>
+        <Image source={require('./assets/vectorgoal.png')} resizeMode='contain' style={{width: windowwidth}}/>
+        {shots[coord].gLocationX && <View
+          style={[
+            styles.pointStyle,
+            {
+              top: parseFloat(shots[coord].gLocationY -11),
+              left: parseFloat(shots[coord].gLocationX -11),
+            },
+          ]}
+        />}
+        <Button type='solid' raised title="Sulje" onPress={()=>{shotTouch('')}}/>
+      </View>
+    )}
+  }
   
 
   return (
@@ -34,27 +61,33 @@ export default function NewMapScreen({ route, navigation }) {
               const goal = shots[i].gResult;
               if(goal){
                 return(
-                  <View
+                  <Pressable 
+                    onPress={()=>{shotTouch(i)}} 
                     style={[styles.true,
                       {
                         top: parseFloat(shots[i].pLocationY -11),
                         left: parseFloat(shots[i].pLocationX -11),
                       },
                     ]}
-                  />)
-                }
+                  />
+                )
+              }
               else {
                 return(
-                  <View
+                  <Pressable 
+                    onPress={()=>{shotTouch(i)}} 
                     style={[styles.false,
                       {
                         top: parseFloat(shots[i].pLocationY -11),
                         left: parseFloat(shots[i].pLocationX -11),
                       },
                     ]}
-                  />)
+                  />
+                )
               }
             })}
+
+            <GoalFrame></GoalFrame>
           </View>
         </ImageBackground>
         <StatusBar style="auto" />
@@ -75,44 +108,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 14,
     backgroundColor: 'yellow',
-  },
-  dropdown: {
-    height: 40,
-    margin: 20,
-    borderWidth: 1,
-    padding: 10,
-  },
-  goalview: {
-    backgroundColor:'#bee6c6',
-    margin: 20,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#34633d',
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5
-  },
-  buttoncont: {
-    width: '50%',
-    marginVertical: 10,
-  },
-  pressed: {
-    backgroundColor: '#34633d',
-  },
-  unpressed: {
-    backgroundColor: 'white',
-  },
-
-  savebutton: {
-    width: '50%',
-    marginVertical: 10,
-    alignSelf: 'center',
   },
   true: {
     height: 22,
